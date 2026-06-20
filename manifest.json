@@ -2,7 +2,8 @@
   "name": "Rally Cap U5 Practice Plan",
   "short_name": "Rally Cap",
   "description": "Baseball Canada U5 Rally Cap 10-Week Practice Plan",
-  "start_url": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#0d47a1",
   "theme_color": "#0d47a1",
@@ -21,14 +22,5 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["sports", "education"],
-  "shortcuts": [
-    {
-      "name": "This Week",
-      "short_name": "This Week",
-      "description": "Jump to current week",
-      "url": "/?week=current",
-      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
-    }
-  ]
+  "categories": ["sports", "education"]
 }

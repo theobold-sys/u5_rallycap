@@ -1,23 +1,25 @@
-const CACHE_NAME = 'rallycap-v1';
+const CACHE_NAME = 'rallycap-v2';
+
+// Relative asset paths — work correctly on GitHub Pages subpaths
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/rallycap.js',
-  '/styles.css',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  './',
+  './index.html',
+  './app.js',
+  './styles.css',
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
-// ── Install: cache all app assets ──────────────────────────────────────────
+// ── Install: cache app assets ──────────────────────────────
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).catch(() => {})
   );
   self.skipWaiting();
 });
 
-// ── Activate: clean up old caches ──────────────────────────────────────────
+// ── Activate: clean old caches ─────────────────────────────
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -27,42 +29,41 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// ── Fetch: serve from cache, fall back to network ──────────────────────────
+// ── Fetch: cache-first, network fallback ───────────────────
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request))
+    caches.match(event.request).then(cached =>
+      cached || fetch(event.request).then(res => {
+        if (res && res.ok && event.request.method === 'GET') {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+        }
+        return res;
+      }).catch(() => cached)
+    )
   );
 });
 
-// ── Push Notifications ─────────────────────────────────────────────────────
+// ── Push Notifications ─────────────────────────────────────
 self.addEventListener('push', event => {
   const data = event.data ? event.data.json() : {};
-  const title = data.title || '⚾ Rally Cap Reminder';
-  const options = {
-    body: data.body || 'Practice today! Get your glove ready.',
-    icon: '/icons/icon-192.png',
-    badge: '/icons/icon-192.png',
-    tag: 'practice-reminder',
-    renotify: true,
-    vibrate: [200, 100, 200],
-    data: { url: data.url || '/' },
-    actions: [
-      { action: 'open', title: '📋 View Practice' },
-      { action: 'dismiss', title: 'Dismiss' }
-    ]
-  };
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    self.registration.showNotification(data.title || '⚾ Rally Cap Practice Today!', {
+      body: data.body || 'Practice today! Get your glove ready.',
+      icon: './icons/icon-192.png',
+      badge: './icons/icon-192.png',
+      tag: 'practice-reminder',
+      vibrate: [200, 100, 200]
+    })
+  );
 });
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  if (event.action === 'dismiss') return;
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-      for (const client of clientList) {
-        if (client.url === '/' && 'focus' in client) return client.focus();
-      }
-      if (clients.openWindow) return clients.openWindow('/');
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) { if ('focus' in c) return c.focus(); }
+      if (clients.openWindow) return clients.openWindow('./');
     })
   );
 });
