@@ -57,6 +57,42 @@ const SKILLS_BY_CAP = {
   ],
 };
 
+// Official Baseball Canada "Rally Cap Drills" YouTube playlist (31 videos)
+const RC_PLAYLIST = 'https://www.youtube.com/playlist?list=PLe-grAVyUnbJckbTs_X4Q8mYyd2j1xiLf';
+
+// Full ordered list of official Baseball Canada Rally Cap drill videos
+const RC_VIDEOS = [
+  { n:1,  name:'Handcuffs',                 url:'https://youtu.be/gYBHnRyWyVY' },
+  { n:2,  name:'The Wheel',                 url:'https://youtu.be/NZqEgR2Liqs' },
+  { n:3,  name:'Catch The Ball Like An Egg',url:'https://youtu.be/aOLLOFJFg4c' },
+  { n:4,  name:'Crocodile',                 url:'https://youtu.be/aOLLOFJFg4c' },
+  { n:5,  name:'The Train',                 url:'https://youtu.be/Cip_NYbcC58' },
+  { n:6,  name:'Light Toss',                url:'https://youtu.be/xvuuRai8bCI' },
+  { n:7,  name:'The Net',                   url:'https://youtu.be/vFMMr1pxaTI' },
+  { n:8,  name:'The Relay',                 url:'https://youtu.be/O8DK_1bSVUY' },
+  { n:9,  name:'Skyball',                   url:'https://youtu.be/iJx0dmzFcX8' },
+  { n:10, name:'The Target',                url:'https://youtu.be/WU-7Nuuh4JM' },
+  { n:11, name:'The Guardian',              url:'https://youtu.be/YhR2_duYGvg' },
+  { n:12, name:'The Tennis Racquet',        url:'https://youtu.be/_UgymdssobM' },
+  { n:13, name:'Between The Two',           url:'https://youtu.be/YNeaTebkrqE' },
+  { n:14, name:'Sliding',                   url:'https://youtu.be/IdAcS-Cerwo' },
+  { n:15, name:'Wiffle Batting Practice',   url:'https://youtu.be/lXshF6MJRHo' },
+  { n:16, name:'Champ',                     url:'https://youtu.be/PksefECTOEQ' },
+  { n:17, name:'Field 3',                   url:'https://youtu.be/dOp4AR9U-Tk' },
+  { n:18, name:'All Messed Up',             url:'https://youtu.be/OE97cwLw3RQ' },
+  { n:19, name:'Precision Hitter',          url:'https://youtu.be/78id4Wqk-6Q' },
+  { n:20, name:'Juggling In Pairs',         url:'https://youtu.be/9soBmbltt4U' },
+  { n:21, name:'Frog Race',                 url:'https://youtu.be/Rel8pHXi5GE' },
+  { n:22, name:'Crab Dance',                url:'https://youtu.be/8k3EZamnJkU' },
+  { n:23, name:'Hurdle Slalom',             url:'https://youtu.be/TOEVQeDMMG8' },
+  { n:24, name:'Stop And Go',               url:'https://youtu.be/RK-cl1r_nK4' },
+  { n:25, name:'Transition',                url:'https://youtu.be/DwbRysppL2w' },
+  { n:26, name:'500',                       url:'https://youtu.be/83dLoe0BPMY' },
+  { n:27, name:'Up And Down',               url:'https://youtu.be/i2JwDwfTrdg' },
+  { n:28, name:'Kangaroo',                  url:'https://youtu.be/IKfLobsnd8Y' },
+  { n:29, name:'Jack Of All Trades',        url:'https://youtu.be/5yOIJ3eejaw' },
+];
+
 const WEEKS = [
   { week:1, theme:'Welcome to Baseball! ⚾', cap:'White', practices:[
     { day:'Practice 1A', duration:'60 min', focus:'Grip, throw & tee hitting', segments:[
@@ -226,6 +262,7 @@ let state = {
   practice: 0,
   expandedSeg: null,
   selectedCap: 'White',
+  videoQuery: '',
   remindersEnabled: false,
   reminderDay: 'Monday',
   reminderTime: '17:00',
@@ -280,6 +317,7 @@ function render() {
   if      (state.view === 'home')     renderHome(page);
   else if (state.view === 'week')     renderWeek(page);
   else if (state.view === 'skills')   renderSkills(page);
+  else if (state.view === 'videos')   renderVideos(page);
   else                                renderSettings(page);
   app.appendChild(page);
   renderNav();
@@ -293,6 +331,7 @@ function renderNav() {
   [{ id:'home', icon:'🏠', label:'Home' },
    { id:'week', icon:'📅', label:'Plan' },
    { id:'skills', icon:'🎯', label:'Skills' },
+   { id:'videos', icon:'▶️', label:'Videos' },
    { id:'settings', icon:'⚙️', label:'Settings' }
   ].forEach(item => {
     const btn = document.createElement('button');
@@ -452,6 +491,71 @@ function renderSkills(el) {
   note.className = 'note-card';
   note.innerHTML = '<b>💡 Tip:</b> Tap ○ next to a skill to mark it complete. Progress is saved on your device.';
   el.appendChild(note);
+}
+
+function renderVideos(el) {
+  el.innerHTML = `<h2 class="page-title">▶️ Rally Cap Drill Videos</h2>`;
+
+  // Intro card linking to the official playlist
+  const intro = document.createElement('div');
+  intro.className = 'card';
+  intro.innerHTML = `
+    <div class="card-title">📺 Official Baseball Canada Videos</div>
+    <p class="card-text">${RC_VIDEOS.length} official drill demonstration videos. Tap any drill to watch on YouTube, or open the full playlist.</p>
+    <a class="yt-playlist-btn" href="${RC_PLAYLIST}" target="_blank" rel="noopener">▶️ Open Full Rally Cap Playlist</a>
+  `;
+  el.appendChild(intro);
+
+  // Search filter box
+  const searchWrap = document.createElement('div');
+  searchWrap.className = 'video-search';
+  searchWrap.innerHTML = `<input type="search" id="vid-search" placeholder="🔍 Search drills…" value="${state.videoQuery || ''}">`;
+  el.appendChild(searchWrap);
+
+  // Filtered list
+  const q = (state.videoQuery || '').toLowerCase().trim();
+  const list = RC_VIDEOS.filter(v => !q || v.name.toLowerCase().includes(q));
+
+  if (list.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'note-card';
+    empty.textContent = 'No drills match your search.';
+    el.appendChild(empty);
+  }
+
+  list.forEach(v => {
+    const row = document.createElement('a');
+    row.className = 'video-row';
+    row.href = v.url;
+    row.target = '_blank';
+    row.rel = 'noopener';
+    row.innerHTML = `
+      <span class="video-num">${v.n}</span>
+      <span class="video-play">▶</span>
+      <span class="video-info">
+        <span class="video-drill">${v.name}</span>
+      </span>
+      <span class="video-arrow">↗</span>
+    `;
+    el.appendChild(row);
+  });
+
+  const note = document.createElement('div');
+  note.className = 'note-card';
+  note.innerHTML = '<b>💡 Tip:</b> Videos open on YouTube in a new tab. All content is courtesy of the official Baseball Canada YouTube channel.';
+  el.appendChild(note);
+
+  // Wire up search (preserve focus + cursor)
+  const input = el.querySelector('#vid-search');
+  if (input) {
+    input.addEventListener('input', e => {
+      state.videoQuery = e.target.value;
+      const pos = e.target.selectionStart;
+      render();
+      const again = document.getElementById('vid-search');
+      if (again) { again.focus(); again.setSelectionRange(pos, pos); }
+    });
+  }
 }
 
 function renderSettings(el) {
